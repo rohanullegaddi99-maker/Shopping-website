@@ -7,18 +7,18 @@ const UserDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const name = localStorage.getItem('name');
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
   const fetchOrders = async () => {
     try {
       const res = await api.get('/orders');
       setOrders(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch user orders:', err);
     }
   };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const filteredOrders = filterStatus === 'All' ? orders : orders.filter(o => o.status === filterStatus);
 

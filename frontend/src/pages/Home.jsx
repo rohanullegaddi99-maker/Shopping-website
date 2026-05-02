@@ -2,22 +2,33 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ShoppingCart, Heart } from 'lucide-react';
 import api from '../api';
+import { addToCart } from '../cartUtils'; // FIX: import cart utility
 
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [mood, setMood] = useState('');
-
-  useEffect(() => {
-    fetchProducts();
-  }, [mood]);
+  const [addedId, setAddedId] = useState(null); // FIX: track which product was just added for visual feedback
 
   const fetchProducts = async () => {
     try {
       const res = await api.get('/products' + (mood ? `?mood=${mood}` : ''));
       setProducts(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch products:', err);
     }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [mood]);
+
+  // FIX: Add to cart handler — saves to localStorage and shows brief feedback
+  const handleAddToCart = (e, product) => {
+    e.preventDefault();        // prevent <Link> navigation
+    e.stopPropagation();       // stop event bubbling up to <Link>
+    addToCart(product);
+    setAddedId(product.id);
+    setTimeout(() => setAddedId(null), 1500); // clear feedback after 1.5 s
   };
 
   return (
@@ -52,16 +63,26 @@ const Home = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {products.map((product) => (
           <div key={product.id} className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-shadow duration-300 group relative">
+            {/* FIX: Link only wraps the image and info — NOT the Add to Cart button */}
             <Link to={`/product/${product.id}`}>
               <div className="relative overflow-hidden rounded-t-xl aspect-square">
-                <img src={product.imageUrl || 'https://via.placeholder.com/300'} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <button className="absolute top-3 right-3 p-2 bg-white/80 rounded-full hover:bg-red-50 hover:text-red-500 transition text-gray-400">
+                <img
+                  src={product.imageUrl || 'https://via.placeholder.com/300'}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                {/* FIX: stopPropagation so Heart click doesn't navigate */}
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="absolute top-3 right-3 p-2 bg-white/80 rounded-full hover:bg-red-50 hover:text-red-500 transition text-gray-400"
+                >
                   <Heart size={20} />
                 </button>
               </div>
               <div className="p-4 space-y-2">
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold text-gray-800 line-clamp-1">{product.name}</h3>
+                  {/* FIX: ₹ Indian Rupee currency */}
                   <span className="font-bold text-indigo-600">₹{product.price}</span>
                 </div>
                 <div className="flex items-center gap-1 text-yellow-400 text-sm">
@@ -70,15 +91,25 @@ const Home = () => {
                 </div>
               </div>
             </Link>
+
+            {/* FIX: Add to Cart button is OUTSIDE the Link with a real onClick handler */}
             <div className="px-4 pb-4">
-              <button className="w-full py-2 bg-gray-900 text-white rounded-lg hover:bg-indigo-600 transition flex items-center justify-center gap-2">
-                <ShoppingCart size={18} /> Add to Cart
+              <button
+                onClick={(e) => handleAddToCart(e, product)}
+                className={`w-full py-2 rounded-lg transition flex items-center justify-center gap-2 font-medium ${
+                  addedId === product.id
+                    ? 'bg-green-600 text-white'   // success state
+                    : 'bg-gray-900 text-white hover:bg-indigo-600'
+                }`}
+              >
+                <ShoppingCart size={18} />
+                {addedId === product.id ? '✓ Added!' : 'Add to Cart'}
               </button>
             </div>
           </div>
         ))}
       </div>
-      
+
       {products.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           No products found for this mood.

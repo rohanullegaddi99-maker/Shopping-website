@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+// Use a relative path so it works with ngrok and the Vite proxy
+const API_URL = '/api';
 
 const api = axios.create({
   baseURL: API_URL,

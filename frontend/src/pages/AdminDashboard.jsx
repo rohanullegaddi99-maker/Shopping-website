@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Package, Tag, Users, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, Package, Tag, ShoppingBag } from 'lucide-react';
 import api from '../api';
 
 const AdminDashboard = () => {
@@ -8,27 +8,46 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
 
+  const fetchAnalytics = async () => {
+    try {
+      const res = await api.get('/admin/analytics');
+      setAnalytics(res.data);
+    } catch (e) {
+      console.error('Failed to fetch analytics:', e);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const res = await api.get('/admin/orders');
+      setOrders(res.data);
+    } catch (e) {
+      console.error('Failed to fetch admin orders:', e);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const res = await api.get('/products');
+      setProducts(res.data);
+    } catch (e) {
+      console.error('Failed to fetch products:', e);
+    }
+  };
+
   useEffect(() => {
     fetchAnalytics();
     fetchOrders();
     fetchProducts();
   }, []);
 
-  const fetchAnalytics = async () => {
-    try { const res = await api.get('/admin/analytics'); setAnalytics(res.data); } catch (e) {}
-  };
-  const fetchOrders = async () => {
-    try { const res = await api.get('/admin/orders'); setOrders(res.data); } catch (e) {}
-  };
-  const fetchProducts = async () => {
-    try { const res = await api.get('/products'); setProducts(res.data); } catch (e) {}
-  };
-
   const updateOrderStatus = async (id, status) => {
     try {
       await api.put(`/admin/orders/${id}/status?status=${status}`);
       fetchOrders();
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to update order status:', e);
+    }
   };
 
   return (
